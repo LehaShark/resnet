@@ -4,7 +4,7 @@ from torch import nn
 import torch.nn.functional as F
 from abc import abstractmethod
 
-from configs.model_config import ModelConfig
+from configs.model_config import OriginalResNetConfig
 from utils import Registry
 
 REGISTRY = Registry('blocks')
@@ -22,9 +22,10 @@ class ResidualBlock(nn.Module):
 
     def _init_params(self):
         for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                # todo: params?
-                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+            if isinstance(m, (nn.Conv2d, nn.Linear)):
+                nn.init.xavier_uniform_(m.weight)
+                nn.init.zeros_(m.bias)
+                    # kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
             elif isinstance(m, nn.BatchNorm2d):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
@@ -32,7 +33,7 @@ class ResidualBlock(nn.Module):
 
 @REGISTRY.register_module
 class InputStem(ResidualBlock):
-    def __init__(self, input_channels: int = 3, output_channels: int = 64, conv_size: tuple = (7,), maxpool_size: int = 3, stride: tuple = (2, 2)):
+    def __init__(self, input_channels: int, output_channels: int, conv_size: tuple, maxpool_size: int, stride: tuple):
         super().__init__()
 
         self.output_channels = output_channels
@@ -42,16 +43,18 @@ class InputStem(ResidualBlock):
         self.maxpool_size = maxpool_size
 
         # num = 1
-        setattr(self, f'conv1', nn.Conv2d(self.input_channels, self.output_channels, *self.conv_size, stride=stride[0], padding=3))
-        # if len(conv_size) > 1:
-        #     for num, size in enumerate(conv_size):
-        #         # setattr(self, f'conv{num + 2}', nn.Conv2d(self.output_size, self.output_size + 4, 1)
-        #         # num += 1
-        #         self.conv1 = nn.Conv2d(self.input_size, self.output_size, *self.conv_size, stride=self.stride[0])
+        setattr(self, f'conv1', nn.Conv2d(self.input_channels, self.output_channels, self.conv_size[0], stride=stride[0], padding=3))
+        if len(conv_size) > 1:
+            for num, size in enumerate(conv_size):
+                if num == 0:
+                    continue
+
+                setattr(self, f'conv{num + 1}', nn.Conv2d(self.output_channels, self.output_channels, stride=stride[num], padding=1)
+                # self.conv1 = nn.Conv2d(self.input_size, self.output_size, *self.conv_size, stride=self.stride[0])
 
         self.bn = nn.BatchNorm2d(self.output_channels)
 
-        self.pool = nn.MaxPool2d(self.maxpool_size, stride=self.stride[1], padding=1)
+        self.pool = nn.MaxPool2d(self.maxpool_size, stride=self.stride[-1], padding=1)
 
         self._init_params()
     def forward(self, x):
@@ -140,7 +143,7 @@ class MultipleBlock(ResidualBlock):
 
 
 if __name__ == '__main__':
-    config = ModelConfig()
+    config = OriginalResNetConfig()
     m = MultipleBlock(64, 4, config)
     x = torch.from_numpy(np.random.normal(size=(1, 64, 56, 56)))
     m.forward(x)

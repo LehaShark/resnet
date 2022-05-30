@@ -79,8 +79,10 @@ class Trainer:
                 self._loss_train_step += loss.item()
                 running_loss = self._loss_train_step / (step + 1)
 
-            correct = len(np.nonzero(np.asarray(torch.argmax(predictions, dim=1) - targets) == 0)[0])
+            correct = len(np.nonzero(np.asarray(torch.argmax(predictions.cpu(), dim=1) - targets.cpu()) == 0)[0])
             acc = correct/self.config.batch_size
+
+            self.writer.add_scalar(f'{stage}/acc', acc, self._global_step[stage])
 
             if self.config.show_statistics and step % self.config.show_each == 0:
                 self._print_overwrite(step, (epoch + 1) * step, loss, acc, stage)
@@ -92,7 +94,7 @@ class Trainer:
 
     @torch.no_grad()
     def validation(self, i_epoch):
-        self._epoch_step(stage='val', epoch=i_epoch)
+        self._epoch_step(stage='valid', epoch=i_epoch)
 
     @torch.no_grad()
     def test(self):

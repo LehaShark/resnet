@@ -5,19 +5,19 @@ from torch.utils.data import DataLoader
 from torchvision import transforms, datasets
 from torch.utils.tensorboard import SummaryWriter
 
-from configs import ModelConfig
+from configs import OriginalResNetConfig
 from configs import DatasetConfig
-from configs.model_config import TrainerConfig
+from configs.trainer_config import TrainerConfig
 from executors.trainer import Trainer
 from nets import OriginalResNet
 from utils import get_weights
 
 if __name__ == '__main__':
-    DATASET_ROOT = 'data/'
+    # DATASET_ROOT = 'data/'
 
     dataset_config = DatasetConfig()
     trainer_config = TrainerConfig()
-    model_cfg = ModelConfig()
+    model_cfg = OriginalResNetConfig()
 
     keys = train_key, valid_key = 'train', 'valid'
 
