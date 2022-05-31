@@ -20,6 +20,7 @@ class Trainer:
                  writer,
                  config,
                  dataloaders: dict,
+                 scheduler,
                  ):
 
         self.config = config
@@ -28,6 +29,7 @@ class Trainer:
 
         self.optimizer = optimizer
         self.criterion = criterion
+        self.scheduler = scheduler
 
         self.dataloaders = dataloaders
 
@@ -43,9 +45,6 @@ class Trainer:
 
 
     def _epoch_step(self, stage = 'test', epoch = None):
-
-        # if stage not in self.dataloaders:
-        #     self._get_data(stage)
 
         if stage not in self._global_step:
             self._get_global_step(stage)
@@ -75,7 +74,7 @@ class Trainer:
             if stage == 'train':
                 loss.backward()
                 self.optimizer.step()
-                # self.scheduler.step(loss.item())
+                self.scheduler.step()
                 self._loss_train_step += loss.item()
                 running_loss = self._loss_train_step / (step + 1)
 
@@ -86,7 +85,6 @@ class Trainer:
 
             if self.config.show_statistics and step % self.config.show_each == 0:
                 self._print_overwrite(step, (epoch + 1) * step, loss, acc, stage)
-
 
 
     def fit(self, epoch_num):

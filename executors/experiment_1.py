@@ -56,7 +56,7 @@ if __name__ == '__main__':
     model = OriginalResNet(model_cfg).to(trainer_config.device)
     # model = ModifyResNet(model_cfg).to(trainer_config.device)
 
-    # weight decay
+                                                                                                                        # weight decay
     if trainer_config.weight_decay is not None:
         w, b = get_weights(model)
         params = [dict(params=w, weight_decay=trainer_config.weight_decay),

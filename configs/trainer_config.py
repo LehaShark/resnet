@@ -20,4 +20,6 @@ class TrainerConfig:
         self.momentum = 0.9
         self.show_each = 10
 
+        self.label_smoothing = 5e-3
+
         self.LOG_PATH = os.path.join(DatasetConfig().PATH, '../logs')

@@ -4,6 +4,8 @@ from torch import optim
 from torch.utils.data import DataLoader
 from torchvision import transforms, datasets
 from torch.utils.tensorboard import SummaryWriter
+from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts, CosineAnnealingLR, LinearLR
+from warmup_scheduler import GradualWarmupScheduler
 
 from configs import OriginalResNetConfig
 from configs import DatasetConfig
@@ -12,6 +14,7 @@ from configs.trainer_config import TrainerConfig
 from executors.trainer import Trainer
 from nets import OriginalResNet, ModifyResNet
 from utils import get_weights
+from utils.utils import zero_weights_bn
 
 if __name__ == '__main__':
     # DATASET_ROOT = 'data/'
@@ -26,7 +29,7 @@ if __name__ == '__main__':
 
     normalize = [transforms.ToTensor(),
                  transforms.Normalize(mean=[0.485, 0.456, 0.405],
-                                 std=[0.229, 0.224, 0.225])]
+                                      std=[0.229, 0.224, 0.225])]
 
     image_transforms = {train_key: transforms.Compose([transforms.RandomResizedCrop(224),
                                                        transforms.RandomHorizontalFlip(),
@@ -61,24 +64,29 @@ if __name__ == '__main__':
                   dict(params=b)]
     else:
         params = model.parameters()
+    zero_weights_bn(model)
 
     optimizer = optim.SGD(params, lr=trainer_config.lr, momentum=trainer_config.momentum)
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.CrossEntropyLoss(label_smoothing=trainer_config.label_smoothing)
 
     writer = SummaryWriter(log_dir=trainer_config.LOG_PATH)
 
+    epochs = 25
+    end_warmup = 4
 
-    class_names = datasets_dict[train_key]
+    scheduler_cosine = CosineAnnealingLR(optimizer, epochs - end_warmup)
+    scheduler_warmup = GradualWarmupScheduler(optimizer, multiplier=1, total_epoch=end_warmup, after_scheduler=scheduler_cosine)
 
     trainer = Trainer(dataloaders=dataloaders_dict,
                       model=model,
                       optimizer=optimizer,
                       criterion=criterion,
                       config=trainer_config,
-                      writer=writer)
+                      writer=writer,
+                      scheduler=scheduler_warmup)
 
-    epoch = 20
-    for epoch in range(epoch):
+
+    for epoch in range(epochs):
         #     trainer.fit(epoch)
         #     trainer.writer.add_scalar(f'scheduler lr', trainer.optimizer.param_groups[0]['lr'], epoch)
         trainer.fit(trainer_config.epoch_num)
