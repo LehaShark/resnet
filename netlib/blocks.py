@@ -47,6 +47,7 @@ class InputStem(ResidualBlock):
 
         input_channels = self.input_channels
         for num, size in enumerate(conv_size):
+            # todo: 32, 32, 64
             self.stem_conv.append(nn.Conv2d(input_channels, self.output_channels, self.conv_size[num], stride=stride[num], padding=1))
             input_channels = output_channels
         self.stem_conv = nn.Sequential(*self.stem_conv)

@@ -57,7 +57,7 @@ class Trainer:
             self.model.eval()
             self._loss_eval_step = 0
 
-
+        correct_ep = 0
         for step, (images, targets) in enumerate(self.dataloaders[stage]):
             # correct = 0
             self._global_step[stage] += 1
@@ -68,6 +68,8 @@ class Trainer:
                 self.optimizer.zero_grad()
 
             loss = self.criterion(predictions, targets.to(self.device))
+            # loss2 = tar2
+            # loss = loss1 * l + loss2 * (1-l)
 
             self.writer.add_scalar(f'{stage}/loss', loss, self._global_step[stage])
 
@@ -79,12 +81,17 @@ class Trainer:
                 running_loss = self._loss_train_step / (step + 1)
 
             correct = len(np.nonzero(np.asarray(torch.argmax(predictions.cpu(), dim=1) - targets.cpu()) == 0)[0])
-            acc = correct/self.config.batch_size
+            acc = correct / self.config.batch_size
+            correct_ep += correct
 
             self.writer.add_scalar(f'{stage}/acc', acc, self._global_step[stage])
 
             if self.config.show_statistics and step % self.config.show_each == 0:
                 self._print_overwrite(step, (epoch + 1) * step, loss, acc, stage)
+
+        acc_ep = correct_ep/(self.config.batch_size*len(self.dataloaders[stage]))
+        self.writer.add_scalar(f'{stage}/acc_ep', acc_ep, self._global_step[stage])
+
 
 
     def fit(self, epoch_num):
