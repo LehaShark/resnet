@@ -7,9 +7,10 @@ from torch.utils.tensorboard import SummaryWriter
 
 from configs import OriginalResNetConfig
 from configs import DatasetConfig
+from configs.model_config import ModifyResNetConfig
 from configs.trainer_config import TrainerConfig
 from executors.trainer import Trainer
-from nets import OriginalResNet
+from nets import OriginalResNet, ModifyResNet
 from utils import get_weights
 
 if __name__ == '__main__':
@@ -18,6 +19,7 @@ if __name__ == '__main__':
     dataset_config = DatasetConfig()
     trainer_config = TrainerConfig()
     model_cfg = OriginalResNetConfig()
+    # model_cfg = ModifyResNetConfig()
 
     keys = train_key, valid_key = 'train', 'valid'
 
@@ -52,6 +54,7 @@ if __name__ == '__main__':
                                               batch_size=trainer_config.batch_size)}
 
     model = OriginalResNet(model_cfg).to(trainer_config.device)
+    # model = ModifyResNet(model_cfg).to(trainer_config.device)
 
     # weight decay
     if trainer_config.weight_decay is not None:
@@ -76,4 +79,10 @@ if __name__ == '__main__':
                       config=trainer_config,
                       writer=writer)
 
-    trainer.fit(trainer_config.epoch_num)
+    epoch = 20
+    for epoch in range(epoch):
+        #     trainer.fit(epoch)
+        #     trainer.writer.add_scalar(f'scheduler lr', trainer.optimizer.param_groups[0]['lr'], epoch)
+        trainer.fit(trainer_config.epoch_num)
+        trainer.validation(epoch)
+        print('_______', epoch, '_______')

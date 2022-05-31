@@ -4,7 +4,7 @@ from torch import nn
 import torch.nn.functional as F
 from abc import abstractmethod
 
-from configs.model_config import OriginalResNetConfig
+from configs.model_config import OriginalResNetConfig, ModifyResNetConfig
 from utils import Registry
 
 REGISTRY = Registry('blocks')
@@ -42,15 +42,14 @@ class InputStem(ResidualBlock):
         self.stride = stride
         self.maxpool_size = maxpool_size
 
-        # num = 1
-        setattr(self, f'conv1', nn.Conv2d(self.input_channels, self.output_channels, self.conv_size[0], stride=stride[0], padding=3))
-        if len(conv_size) > 1:
-            for num, size in enumerate(conv_size):
-                if num == 0:
-                    continue
 
-                setattr(self, f'conv{num + 1}', nn.Conv2d(self.output_channels, self.output_channels, stride=stride[num], padding=1)
-                # self.conv1 = nn.Conv2d(self.input_size, self.output_size, *self.conv_size, stride=self.stride[0])
+        self.stem_conv = []
+
+        input_channels = self.input_channels
+        for num, size in enumerate(conv_size):
+            self.stem_conv.append(nn.Conv2d(input_channels, self.output_channels, self.conv_size[num], stride=stride[num], padding=1))
+            input_channels = output_channels
+        self.stem_conv = nn.Sequential(*self.stem_conv)
 
         self.bn = nn.BatchNorm2d(self.output_channels)
 
@@ -58,7 +57,8 @@ class InputStem(ResidualBlock):
 
         self._init_params()
     def forward(self, x):
-        x = F.relu(self.bn(self.conv1(x)))
+        # todo: batchnorm between convs?
+        x = F.relu(self.bn(self.stem_conv(x)))
         x = self.pool(x)
         return x
 
@@ -68,20 +68,19 @@ class InputStem(ResidualBlock):
 
 @REGISTRY.register_module
 class BaseBlock(ResidualBlock):
-    def __init__(self, input_channels: int, output_channels: int, conv_size: tuple = None, stride: tuple = None, is_downsample: bool = False):
+    def __init__(self, input_channels: int, output_channels: int, conv_size: tuple = None, stride: tuple = None, downsample = None):
         super().__init__()
-        self.is_downsample = is_downsample
+        # self.is_downsample = is_downsample
         if 2*input_channels == output_channels:
             self.stride = 2
         else:
             self.stride = 1
-        self.downsample = nn.Conv2d(input_channels, output_channels, 1, stride=self.stride)
+
+        self.downsample = downsample(input_channels, output_channels, 1, self.stride) if downsample is not None else None
+        # self.downsample = ModifyResNetConfig().downsample(input_channels, output_channels, 1, self.stride)
+        # nn.Conv2d(input_channels, output_channels, 1, stride=self.stride)
 
         output_channels = output_channels // 4
-
-
-        # self.downsize = nn.Conv2d(input_channels, output_channels, 1, stride=s)
-
 
         self.convIn = nn.Conv2d(input_channels, output_channels, conv_size[0], stride=stride[0])
         self.convHid = nn.Conv2d(output_channels, output_channels, conv_size[1], stride=stride[1], padding=1)
@@ -96,13 +95,13 @@ class BaseBlock(ResidualBlock):
         z = F.relu(self.bn_in(self.convIn(x)))
         z = F.relu(self.bn_in(self.convHid(z)))
         z = self.bn_out(self.convOut(z))
-        if self.is_downsample:
+        if self.downsample is not None:
             return F.relu(self.downsample(x) + z)
         return F.relu(x + z)
 
 
 class MultipleBlock(ResidualBlock):
-    def __init__(self, input_channels: int, output_channels: int, blocks_count: int, config, is_first_stage: bool = False):
+    def __init__(self, input_channels: int, output_channels: int, blocks_count: int, config, is_first_stage: bool = False, downsample = None):
         super().__init__()
         self.config = config
         self.input_channels = input_channels
@@ -110,17 +109,17 @@ class MultipleBlock(ResidualBlock):
 
         self.stride = (1, 1, 1)
 
-
         self.block_init = {'input_channels': self.input_channels,
                            'output_channels': self.output_channels,
                            'conv_size': self.config.baseblock_params.conv_size,
                            'stride': self.stride if is_first_stage else self.config.baseblock_params.stride,
-                           'is_downsample': True}
+                           # 'is_downsample': True,
+                           'downsample': downsample}
 
         setattr(self, 'block1', REGISTRY.get('BaseBlock', self.block_init))
 
 
-        self.block_init['is_downsample'] = False
+        self.block_init['downsample'] = None
         self.block_init['input_channels'] = self.output_channels
         self.block_init['stride'] = self.stride
 

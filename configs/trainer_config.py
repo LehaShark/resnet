@@ -18,6 +18,6 @@ class TrainerConfig:
         self.criterion = 'CrossEntropyLoss'
         self.optim = 'SGD'
         self.momentum = 0.9
-        self.show_each = 1
+        self.show_each = 10
 
         self.LOG_PATH = os.path.join(DatasetConfig().PATH, '../logs')
