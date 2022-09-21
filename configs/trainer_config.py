@@ -9,11 +9,12 @@ class TrainerConfig:
         self.epoch_size = 10
         self.lr = 1e-3
         self.weight_decay = 1e-4
-        self.batch_size = 64
+        self.batch_size = 128
 
         self.show_statistics = True
         self.epoch_num = 20
-        self.device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
+        self.device = torch.device('cuda')
+        # self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
         self.criterion = 'CrossEntropyLoss'
         self.optim = 'SGD'

@@ -109,12 +109,13 @@ class Trainer:
         self._epoch_step(stage='test')
 
     def _print_overwrite(self, step, total_step, loss, acc, stage):
-        sys.stdout.write('\r')
+        # sys.stdout.write('\r')
         if stage == 'train':
-            sys.stdout.write("Train Steps: %d/%d Loss: %.4f Acc: %.4f" % (step, total_step, loss, acc))
-            # sys.stdout.write("Train Steps: %d/%d  Acc: %.4f " % (step, total_step, loss))
+            print("Train Steps: %d/%d Loss: %.4f Acc: %.4f /n" % (step, total_step, loss, acc))
+            # sys.stdout.write("Train Steps: %d/%d Loss: %.4f Acc: %.4f" % (step, total_step, loss, acc))
         else:
-            sys.stdout.write("Valid Steps: %d/%d Loss: %.4f Acc: %.4f" % (step, total_step, loss, acc))
+            print("Valid Steps: %d/%d Loss: %.4f Acc: %.4f /n" % (step, total_step, loss, acc))
+            # sys.stdout.write("Valid Steps: %d/%d Loss: %.4f Acc: %.4f" % (step, total_step, loss, acc))
 
         sys.stdout.flush()
 

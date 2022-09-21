@@ -80,9 +80,12 @@ if __name__ == '__main__':
                       writer=writer)
 
     epoch = 20
-    for epoch in range(epoch):
+    for epoch in range(epoch + 1):
         #     trainer.fit(epoch)
         #     trainer.writer.add_scalar(f'scheduler lr', trainer.optimizer.param_groups[0]['lr'], epoch)
         trainer.fit(trainer_config.epoch_num)
-        trainer.validation(epoch)
-        print('_______', epoch, '_______')
+
+        print('/n', '_______', epoch, '_______')
+        if epoch % 4 == 0:
+            trainer.validation(epoch)
+            trainer.save_model(epoch, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'logs'))
