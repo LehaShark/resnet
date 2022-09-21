@@ -33,38 +33,44 @@ class ResidualBlock(nn.Module):
 
 @REGISTRY.register_module
 class InputStem(ResidualBlock):
-    def __init__(self, input_channels: int, output_channels: int, conv_size: tuple, maxpool_size: int, stride: tuple):
+    def __init__(self, input_channels: tuple, output_channels: tuple, conv_size: tuple, maxpool_size: int, stride: tuple, padding: tuple):
         super().__init__()
 
         self.output_channels = output_channels
         self.input_channels = input_channels
         self.conv_size = conv_size
         self.stride = stride
+        self.padding = padding
         self.maxpool_size = maxpool_size
 
-
         self.stem_conv = []
+
 
         input_channels = self.input_channels
         for num, size in enumerate(conv_size):
             # todo: 32, 32, 64
-            self.stem_conv.append(nn.Conv2d(input_channels, self.output_channels, self.conv_size[num], stride=stride[num], padding=1))
-            input_channels = output_channels
+            # todo: padding modify & original 1, 3 - DONE
+            self.stem_conv.append(nn.Conv2d(input_channels[num], self.output_channels[num], self.conv_size[num], stride=self.stride[num], padding=self.padding[num]))
+            self.stem_conv.append(nn.BatchNorm2d(self.output_channels[num]))
+
+            # for the next conv layer
+            # input_channels = output_channels
+
         self.stem_conv = nn.Sequential(*self.stem_conv)
 
-        self.bn = nn.BatchNorm2d(self.output_channels)
+        # self.bn = nn.BatchNorm2d(self.output_channels)
 
         self.pool = nn.MaxPool2d(self.maxpool_size, stride=self.stride[-1], padding=1)
 
         self._init_params()
     def forward(self, x):
-        # todo: batchnorm between convs?
-        x = F.relu(self.bn(self.stem_conv(x)))
+        # todo: batchnorm between convs? - DONE.
+        x = F.relu(self.stem_conv(x))
         x = self.pool(x)
         return x
 
     def get_output_channel(self):
-        return self.output_channels
+        return self.output_channels[-1]
 
 
 @REGISTRY.register_module
@@ -105,6 +111,8 @@ class MultipleBlock(ResidualBlock):
     def __init__(self, input_channels: int, output_channels: int, blocks_count: int, config, is_first_stage: bool = False, downsample = None):
         super().__init__()
         self.config = config
+
+        # todo: check input outpu & do this tuple elements.
         self.input_channels = input_channels
         self.output_channels = 4 * output_channels
 
@@ -136,7 +144,7 @@ class MultipleBlock(ResidualBlock):
 
     def forward(self, x):
         for name, module in self.__dict__['_modules'].items():
-            # todo: enumerator stage start
+            # todo: enumerator stage start (Не обязательно)
             if 'block' in name:
                 x = module(x)
         return x

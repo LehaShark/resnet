@@ -20,7 +20,7 @@ class Trainer:
                  writer,
                  config,
                  dataloaders: dict,
-                 scheduler,
+                 scheduler=None,
                  ):
 
         self.config = config
@@ -76,7 +76,10 @@ class Trainer:
             if stage == 'train':
                 loss.backward()
                 self.optimizer.step()
-                self.scheduler.step()
+
+                if self.scheduler is not None:
+                    self.scheduler.step()
+
                 self._loss_train_step += loss.item()
                 running_loss = self._loss_train_step / (step + 1)
 
@@ -136,5 +139,3 @@ class Trainer:
         self.model.load_state_dict(checkpoint['model'])
         self.optimizer.load_state_dict(checkpoint['optimizer'])
         print('model loaded')
-
-

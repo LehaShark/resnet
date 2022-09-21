@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-from configs.model_config import OriginalResNetConfig
+from configs.model_config import OriginalResNetConfig, ModifyResNetConfig
 from netlib.blocks import MultipleBlock, InputStem
 import torch.nn.functional as F
 
@@ -50,6 +50,8 @@ if __name__ == '__main__':
     from torchsummary import summary
 
     cfg = OriginalResNetConfig()
+    cfg = ModifyResNetConfig()
+
     model = ResNet50(cfg)
 
     summary = summary(model, (3, 224, 224), batch_size=32)

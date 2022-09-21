@@ -15,11 +15,13 @@ class OriginalResNetConfig:
         # self.blocks_count = 4
 
 
-        self.stem = {'input_channels': 3,
-                     'output_channels': 64,
+        self.stem = {'input_channels': (3,),
+                     'output_channels': (64,),
                      'conv_size': (7,),
                      'maxpool_size': 3,
-                     'stride': (2, 2)}
+                     'stride': (2, 2),
+                     'padding': (3,)
+                     }
 
         self.baseblock_params = EasyDict()
         self.baseblock_params.conv_size = (1, 3, 1)
@@ -38,11 +40,13 @@ class OriginalResNetConfig:
 class ModifyResNetConfig:
     def __init__(self):
 
-        self.stem = {'input_channels': 3,
-                     'output_channels': 64,
-                     'conv_size': (3, 3, 3), # mod
+        self.stem = {'input_channels': (3, 32, 32),
+                     'output_channels': (32, 32, 64),
+                     'conv_size': (3, 3, 3), #mod
                      'maxpool_size': 3,
-                     'stride': (2, 1, 1, 2)}
+                     'stride': (2, 1, 1, 2),
+                     'padding': (1, 1, 1),
+                     }
 
         self.baseblock_params = EasyDict()
         self.baseblock_params.conv_size = (1, 3, 1)
@@ -51,5 +55,4 @@ class ModifyResNetConfig:
         self.multipleblock_params = EasyDict()
         self.multipleblock_params.depth_size = [64, 128, 256, 512]
         self.multipleblock_params.count = [3, 4, 6, 3]
-
 
