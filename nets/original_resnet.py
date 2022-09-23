@@ -51,3 +51,4 @@ if __name__ == '__main__':
 
     summary = summary(model, (3, 224, 224), batch_size=32)
     print(model)
+

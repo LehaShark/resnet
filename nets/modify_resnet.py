@@ -1,15 +1,37 @@
+from typing import Type
+
 import torch
 from torch import nn
 
 from configs.model_config import OriginalResNetConfig, ModifyResNetConfig
 from netlib.blocks import MultipleBlock, InputStem
+from utils import StochasticDepth
 import torch.nn.functional as F
 
 
 class ResNet50(nn.Module):
-    def __init__(self, config):
+    def __init__(self, config, stochastic_depth: Type[StochasticDepth] = None):
         super().__init__()
         self.config = config
+
+        self._num_blocks = sum(self.config.multipleblock_params.count)
+        self._probabilities = []
+
+
+        if stochastic_depth is not None:
+            prob_cls = stochastic_depth(self._num_blocks)
+            probs = prob_cls.get_props()
+            idx = 0
+            for n in self.config.multipleblock_params.count:
+                probs[idx] = 1.0
+                self._probabilities.append(probs[idx:idx+n])
+                idx += n
+
+        # else:
+        #     for n in self.config.multipleblock_params.count:
+        #         probs[idx] = 1.0
+        #         self._probabilities.append(probs[idx:idx + n])
+        #         idx += n
 
         self.input = InputStem(**config.stem)
         # for n in range(num)
@@ -18,14 +40,16 @@ class ResNet50(nn.Module):
                                     self.config.multipleblock_params.count[0],
                                     self.config,
                                     downsample=self.downsample,
-                                    is_first_stage=True)
+                                    is_first_stage=True,
+                                    probabilities=self._probabilities[0])
         for i in range(1, len(config.multipleblock_params.count)):
             in_channels = getattr(self, f'stage{i}').get_output_channel()
             setattr(self, f'stage{i + 1}', MultipleBlock(in_channels,
                                                          self.config.multipleblock_params.depth_size[i],
                                                          self.config.multipleblock_params.count[i],
                                                          self.config,
-                                                         downsample=self.downsample))
+                                                         downsample=self.downsample,
+                                                         probabilities=self._probabilities[i]))
         self.pool = nn.AdaptiveAvgPool2d(1)
         self.fc = nn.Linear(self.stage4.get_output_channel(), 12)
 

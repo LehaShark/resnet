@@ -1,0 +1,10 @@
+pytorch==11.3
+torchvision
+torchaudio
+cudatoolkit=11.3
+tensorboard
+torchsummary
+opencv-python
+easydict
+numpy
+git+https://github.com/ildoonet/pytorch-gradual-warmup-lr.git

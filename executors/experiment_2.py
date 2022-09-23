@@ -7,13 +7,14 @@ from torch.utils.tensorboard import SummaryWriter
 from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts, CosineAnnealingLR, LinearLR
 from warmup_scheduler import GradualWarmupScheduler
 
-from configs import OriginalResNetConfig
 from configs import DatasetConfig
-from configs.model_config import ModifyResNetConfig
+from configs import ModifyResNetConfig
 from configs.trainer_config import TrainerConfig
+from dataloader import ImageLoader
 from executors.trainer import Trainer
-from nets import OriginalResNet, ModifyResNet
-from utils import get_weights
+from nets import ModifyResNet
+from transforms.transforms import LabelSmoothing
+from utils import get_weights, LinearStochasticDepth
 from utils.utils import zero_weights_bn
 
 if __name__ == '__main__':
@@ -41,13 +42,15 @@ if __name__ == '__main__':
                         valid_key: transforms.Compose([transforms.Resize(256),
                                                        transforms.CenterCrop(224),
                                                        *normalize])}
-    target_transforms = {}
 
-    datasets_dict = {k: datasets.ImageFolder(root=os.path.join(dataset_config.PATH, k),
-                                             transform=image_transforms[k] if k in image_transforms else None,
-                                             target_transform=target_transforms[k] if k in target_transforms else None)
+    target_transforms = {train_key: transforms.Compose([LabelSmoothing(12, smooth=0.1),
+                                                        ])}
+
+
+    datasets_dict = {k: ImageLoader(root=os.path.join(dataset_config.PATH, k),
+                                    transform=image_transforms[k] if k in image_transforms else None,
+                                    target_transform=target_transforms[k] if k in target_transforms else None)
                      for k in keys}
-
 
 
     dataloaders_dict = {train_key: DataLoader(datasets_dict[train_key],
@@ -55,7 +58,8 @@ if __name__ == '__main__':
                         valid_key: DataLoader(datasets_dict[valid_key],
                                               batch_size=trainer_config.batch_size)}
 
-    model = ModifyResNet(model_cfg).to(trainer_config.device)
+
+    model = ModifyResNet(model_cfg, stochastic_depth=LinearStochasticDepth).to(trainer_config.device)
 
     # weight decay
     if trainer_config.weight_decay is not None:
@@ -64,10 +68,11 @@ if __name__ == '__main__':
                   dict(params=b)]
     else:
         params = model.parameters()
+
     zero_weights_bn(model)
 
     optimizer = optim.SGD(params, lr=trainer_config.lr, momentum=trainer_config.momentum)
-    criterion = nn.CrossEntropyLoss(label_smoothing=trainer_config.label_smoothing)
+    criterion = nn.CrossEntropyLoss()
 
     writer = SummaryWriter(log_dir=trainer_config.LOG_PATH)
 
@@ -85,10 +90,13 @@ if __name__ == '__main__':
                       writer=writer,
                       scheduler=scheduler_warmup)
 
-
-    for epoch in range(epochs):
+    epoch = 40
+    for epoch in range(epoch + 1):
         #     trainer.fit(epoch)
         #     trainer.writer.add_scalar(f'scheduler lr', trainer.optimizer.param_groups[0]['lr'], epoch)
         trainer.fit(trainer_config.epoch_num)
-        trainer.validation(epoch)
-        print('_______', epoch, '_______')
+
+        print('\n', '_______', epoch, '_______')
+        if epoch % 5 == 0:
+            trainer.save_model(epoch, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'logs'))
+    trainer.validation(epoch)

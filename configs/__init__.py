@@ -1,2 +1,2 @@
-from configs.model_config import OriginalResNetConfig
+from configs.model_config import OriginalResNetConfig, ModifyResNetConfig
 from configs.dataset_config import DatasetConfig

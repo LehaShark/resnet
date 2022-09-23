@@ -32,8 +32,6 @@ class OriginalResNetConfig:
         self.multipleblock_params.count = [3, 4, 6, 3]
 
 
-
-
     def get_input_stem(self, output_channels):
         return [('Conv2d', dict(in_channels=1))]
 

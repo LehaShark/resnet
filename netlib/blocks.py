@@ -75,9 +75,12 @@ class InputStem(ResidualBlock):
 
 @REGISTRY.register_module
 class BaseBlock(ResidualBlock):
-    def __init__(self, input_channels: int, output_channels: int, conv_size: tuple = None, stride: tuple = None, downsample = None):
+    def __init__(self, input_channels: int, output_channels: int, conv_size: tuple = None, stride: tuple = None, downsample=None, probability: float = 1.0):
         super().__init__()
         # self.is_downsample = is_downsample
+
+        self.probability = probability if probability >= 0 else 0
+
         if 2*input_channels == output_channels:
             self.stride = 2
         else:
@@ -99,22 +102,30 @@ class BaseBlock(ResidualBlock):
         self._init_params()
 
     def forward(self, x):
-        z = F.relu(self.bn_in(self.convIn(x)))
-        z = F.relu(self.bn_in(self.convHid(z)))
-        z = self.bn_out(self.convOut(z))
+        dropout = self.training and self.probability < np.random.uniform()
+
+        if dropout:
+            z = 0
+        else:
+            z = F.relu(self.bn_in(self.convIn(x)))
+            z = F.relu(self.bn_in(self.convHid(z)))
+            z = self.bn_out(self.convOut(z))
+
         if self.downsample is not None:
             return F.relu(self.downsample(x) + z)
         return F.relu(x + z)
 
 
 class MultipleBlock(ResidualBlock):
-    def __init__(self, input_channels: int, output_channels: int, blocks_count: int, config, is_first_stage: bool = False, downsample = None):
+    def __init__(self, input_channels: int, output_channels: int, blocks_count: int, config, is_first_stage: bool = False, probabilities: tuple = None, downsample=None):
         super().__init__()
         self.config = config
 
-        # todo: check input outpu & do this tuple elements.
+        # todo: check input output & do this tuple elements. ...
         self.input_channels = input_channels
         self.output_channels = 4 * output_channels
+
+        self._probabilities = probabilities
 
         self.stride = (1, 1, 1)
 
@@ -123,7 +134,9 @@ class MultipleBlock(ResidualBlock):
                            'conv_size': self.config.baseblock_params.conv_size,
                            'stride': self.stride if is_first_stage else self.config.baseblock_params.stride,
                            # 'is_downsample': True,
-                           'downsample': downsample}
+                           'downsample': downsample,
+                           'probability': self._probabilities[0] if self._probabilities is not None else 1.,
+                           }
 
         setattr(self, 'block1', REGISTRY.get('BaseBlock', self.block_init))
 
@@ -135,6 +148,8 @@ class MultipleBlock(ResidualBlock):
 
         for num in range(2, blocks_count + 1):
             setattr(self, f'block{num}', REGISTRY.get('BaseBlock', self.block_init))
+
+            self.block_init['probability'] = self._probabilities[num-1] if self._probabilities is not None else 1.
 
 
         super(MultipleBlock, self)._init_params()

@@ -1,5 +1,7 @@
 import os
+from abc import abstractmethod
 
+import numpy as np
 from torch.utils.data import Dataset
 from configs import DatasetConfig
 from torchvision.datasets import ImageFolder
@@ -29,5 +31,13 @@ from torchvision.datasets import ImageFolder
 #     def __init__(self, config: DatasetConfig, transform=None, target_transform=None):
 #         self.config = config
 #         # self.dataset = ima
+
+# class DatasetBase:
+#     def __call__(self, *args, **kwargs):
+#         return self.decorate(*args, **kwargs)
+#
+#     @abstractmethod
+#     def decorate(self, *args, **kwargs):
+#         raise NotImplementedError()
 
 

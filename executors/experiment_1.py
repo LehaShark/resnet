@@ -85,7 +85,7 @@ if __name__ == '__main__':
         #     trainer.writer.add_scalar(f'scheduler lr', trainer.optimizer.param_groups[0]['lr'], epoch)
         trainer.fit(trainer_config.epoch_num)
 
-        print('/n', '_______', epoch, '_______')
+        print('\n', '_______', epoch, '_______')
         if epoch % 4 == 0:
             trainer.validation(epoch)
             trainer.save_model(epoch, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'logs'))
