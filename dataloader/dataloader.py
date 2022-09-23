@@ -37,19 +37,19 @@ class ImageLoader(DatasetFolder):
         self.imgs = self.samples
         # self.dataset = dataset
 
-    def take_item(self, index: int) -> Tuple[Any, Any]:
-        path, target = self.samples[index]
-        sample = self.loader(path)
-        if self.transform is not None:
-            sample = self.transform(sample)
-        if self.target_transform is not None:
-            target = self.target_transform(target)
-
-        return sample, target
+    # def take_item(self, index: int) -> Tuple[Any, Any]:
+    #     path, target = self.samples[index]
+    #     sample = self.loader(path)
+    #     if self.transform is not None:
+    #         sample = self.transform(sample)
+    #     if self.target_transform is not None:
+    #         target = self.target_transform(target)
+    #
+    #     return sample, target
 
     def __getitem__(self, index: int) -> Tuple[Any, Any]:
 
-        img1, target1 = self.take_item(index)
+        img1, target1 = super().__getitem__(index)
         # take different cls
         second_idx = round(np.random.uniform(0, len(self.imgs)))
 
@@ -58,7 +58,7 @@ class ImageLoader(DatasetFolder):
 
         lmd = round(np.random.beta(1, 1), 4)
 
-        img2, target2 = self.take_item(second_idx)
+        img2, target2 = super().__getitem__(second_idx)
         # return target1, target2
         mix_img = lmd * img1 + (1 - lmd) * img2
         mix_target = lmd * target1 + (1 - lmd) * target2 if torch.any(target1 != target2) else target1

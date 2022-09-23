@@ -12,7 +12,7 @@ class TrainerConfig:
         self.batch_size = 128
 
         self.show_statistics = True
-        self.epoch_num = 20
+        self.epoch_num = 40
         self.device = torch.device('cuda')
         # self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 

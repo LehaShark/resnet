@@ -4,7 +4,7 @@ from torch import optim
 from torch.utils.data import DataLoader
 from torchvision import transforms, datasets
 from torch.utils.tensorboard import SummaryWriter
-from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts, CosineAnnealingLR, LinearLR
+from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts, CosineAnnealingLR, LinearLR, CyclicLR
 from warmup_scheduler import GradualWarmupScheduler
 
 from configs import DatasetConfig
@@ -71,16 +71,16 @@ if __name__ == '__main__':
 
     zero_weights_bn(model)
 
-    optimizer = optim.SGD(params, lr=trainer_config.lr, momentum=trainer_config.momentum)
+    optimizer = optim.SGD(params, lr=trainer_config.lr, weight_decay=trainer_config.weight_decay, momentum=trainer_config.momentum)
     criterion = nn.CrossEntropyLoss()
 
     writer = SummaryWriter(log_dir=trainer_config.LOG_PATH)
 
-    epochs = 25
+    epochs = trainer_config.epoch_num
     end_warmup = 4
 
-    scheduler_cosine = CosineAnnealingLR(optimizer, epochs - end_warmup)
-    scheduler_warmup = GradualWarmupScheduler(optimizer, multiplier=1, total_epoch=end_warmup, after_scheduler=scheduler_cosine)
+
+    scheduler = CyclicLR(optimizer, base_lr=trainer_config.lr, max_lr=0.1)
 
     trainer = Trainer(dataloaders=dataloaders_dict,
                       model=model,
@@ -88,10 +88,10 @@ if __name__ == '__main__':
                       criterion=criterion,
                       config=trainer_config,
                       writer=writer,
-                      scheduler=scheduler_warmup)
+                      scheduler=scheduler)
 
-    epoch = 40
-    for epoch in range(epoch + 1):
+    # epoch = 40
+    for epoch in range(epochs + 1):
         #     trainer.fit(epoch)
         #     trainer.writer.add_scalar(f'scheduler lr', trainer.optimizer.param_groups[0]['lr'], epoch)
         trainer.fit(trainer_config.epoch_num)
@@ -99,4 +99,4 @@ if __name__ == '__main__':
         print('\n', '_______', epoch, '_______')
         if epoch % 5 == 0:
             trainer.save_model(epoch, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'logs'))
-    trainer.validation(epoch)
+    trainer.validation(40)

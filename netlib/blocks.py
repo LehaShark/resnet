@@ -31,6 +31,7 @@ class ResidualBlock(nn.Module):
                 nn.init.constant_(m.bias, 0)
 
 
+
 @REGISTRY.register_module
 class InputStem(ResidualBlock):
     def __init__(self, input_channels: tuple, output_channels: tuple, conv_size: tuple, maxpool_size: int, stride: tuple, padding: tuple):

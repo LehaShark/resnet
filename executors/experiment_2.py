@@ -76,7 +76,7 @@ if __name__ == '__main__':
 
     writer = SummaryWriter(log_dir=trainer_config.LOG_PATH)
 
-    epochs = 25
+    epochs = 40
     end_warmup = 4
 
     scheduler_cosine = CosineAnnealingLR(optimizer, epochs - end_warmup)
@@ -90,13 +90,17 @@ if __name__ == '__main__':
                       writer=writer,
                       scheduler=scheduler_warmup)
 
-    epoch = 40
-    for epoch in range(epoch + 1):
+    # epoch = 40
+    for epoch in range(epochs + 1):
         #     trainer.fit(epoch)
-        #     trainer.writer.add_scalar(f'scheduler lr', trainer.optimizer.param_groups[0]['lr'], epoch)
+        # trainer.writer.add_scalar(f'scheduler lr', trainer.optimizer.param_groups[0]['lr'], epoch)
         trainer.fit(trainer_config.epoch_num)
+
+        for i, param_group in enumerate(trainer.optimizer.param_groups):
+            trainer.writer.add_scalar(f'scheduler lr/param_group{i}',
+                                            param_group['lr'], epoch)
 
         print('\n', '_______', epoch, '_______')
         if epoch % 5 == 0:
             trainer.save_model(epoch, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'logs'))
-    trainer.validation(epoch)
+    trainer.validation(epochs)
