@@ -85,8 +85,11 @@ class Trainer:
 
                 self._loss_train_step += loss.item()
                 running_loss = self._loss_train_step / (step + 1)
-            correct = (torch.argmax(predictions.cpu(), dim=1) == torch.argmax(targets.cpu(), dim=1)).sum()
+            correct = (torch.argmax(predictions.cpu(), dim=1) == targets.cpu()).sum()
+            # correct = (torch.argmax(predictions.cpu(), dim=1) == torch.argmax(targets.cpu(), dim=1)).sum()
+
             # correct = len(np.nonzero(np.asarray(torch.argmax(predictions.cpu(), dim=1) - torch.argmax(targets.cpu())) == 0)[0])
+
             acc = correct / len(targets)
             correct_ep += correct
 
@@ -140,7 +143,7 @@ class Trainer:
         print('model saved, epoch:', epoch)
 
     def load_model(self, path):
-        checkpoint = torch.load(path)
+        checkpoint = torch.load(path, map_location=self.device)
         self._global_step = checkpoint['epoch']
         self.model.load_state_dict(checkpoint['model'])
         self.optimizer.load_state_dict(checkpoint['optimizer'])

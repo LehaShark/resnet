@@ -6,7 +6,7 @@ import os
 import os.path
 from typing import Any, Callable, cast, Dict, List, Optional, Tuple
 from typing import Union
-
+from torch.nn import functional as F
 from PIL import Image
 from torchvision.datasets.folder import default_loader, IMG_EXTENSIONS, DatasetFolder
 
@@ -49,19 +49,23 @@ class ImageLoader(DatasetFolder):
 
     def __getitem__(self, index: int) -> Tuple[Any, Any]:
 
-        img1, target1 = super().__getitem__(index)
+        img1, label1 = super().__getitem__(index)
         # take different cls
-        second_idx = round(np.random.uniform(0, len(self.imgs)))
+        second_idx = int(np.random.uniform(0, len(self.samples)))
 
         if second_idx == index:
-            return img1, target1
+            return img1, label1
 
         lmd = round(np.random.beta(1, 1), 4)
 
-        img2, target2 = super().__getitem__(second_idx)
+        img2, label2 = super().__getitem__(second_idx)
         # return target1, target2
+        if isinstance(label1, int) and isinstance(label2, int):
+            label1 = F.one_hot(torch.tensor(label1), num_classes=len(self.classes))
+            label2 = F.one_hot(torch.tensor(label2), num_classes=len(self.classes))
+
         mix_img = lmd * img1 + (1 - lmd) * img2
-        mix_target = lmd * target1 + (1 - lmd) * target2 if torch.any(target1 != target2) else target1
+        mix_target = lmd * label1 + (1 - lmd) * label2 if torch.any(label1 != label2).item() else label1
 
         # print('ya tut')
 

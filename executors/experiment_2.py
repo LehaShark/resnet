@@ -91,16 +91,19 @@ if __name__ == '__main__':
                       scheduler=scheduler_warmup)
 
     # epoch = 40
-    for epoch in range(epochs + 1):
-        #     trainer.fit(epoch)
-        # trainer.writer.add_scalar(f'scheduler lr', trainer.optimizer.param_groups[0]['lr'], epoch)
-        trainer.fit(trainer_config.epoch_num)
+    # for epoch in range(epochs + 1):
+    #
+    #     #     trainer.fit(epoch)
+    #     # trainer.writer.add_scalar(f'scheduler lr', trainer.optimizer.param_groups[0]['lr'], epoch)
+    #     trainer.fit(trainer_config.epoch_num)
+    #
+    #     for i, param_group in enumerate(trainer.optimizer.param_groups):
+    #         trainer.writer.add_scalar(f'scheduler lr/param_group{i}',
+    #                                         param_group['lr'], epoch)
+    #
+    #     print('\n', '_______', epoch, '_______')
+    #     if epoch % 5 == 0:
+    #         trainer.save_model(epoch, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'logs'))
 
-        for i, param_group in enumerate(trainer.optimizer.param_groups):
-            trainer.writer.add_scalar(f'scheduler lr/param_group{i}',
-                                            param_group['lr'], epoch)
-
-        print('\n', '_______', epoch, '_______')
-        if epoch % 5 == 0:
-            trainer.save_model(epoch, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'logs'))
+    model = trainer.load_model(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'logs\\exp_2_local\\30.pth'))
     trainer.validation(epochs)

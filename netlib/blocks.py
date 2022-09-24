@@ -53,6 +53,7 @@ class InputStem(ResidualBlock):
             # todo: padding modify & original 1, 3 - DONE
             self.stem_conv.append(nn.Conv2d(input_channels[num], self.output_channels[num], self.conv_size[num], stride=self.stride[num], padding=self.padding[num]))
             self.stem_conv.append(nn.BatchNorm2d(self.output_channels[num]))
+            self.stem_conv.append(nn.ReLU())
 
             # for the next conv layer
             # input_channels = output_channels

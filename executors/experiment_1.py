@@ -79,8 +79,12 @@ if __name__ == '__main__':
                       config=trainer_config,
                       writer=writer)
 
-    epoch = 20
-    for epoch in range(epoch + 1):
+    model = trainer.load_model(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "logs\\exp_1\\40.pth"))
+
+    epochs = 1
+    for epoch in range(epochs):
+
+        # trainer.validation(epoch)
         #     trainer.fit(epoch)
         #     trainer.writer.add_scalar(f'scheduler lr', trainer.optimizer.param_groups[0]['lr'], epoch)
         trainer.fit(trainer_config.epoch_num)
