@@ -62,7 +62,6 @@ class Trainer:
         len_dataloader = 0
         correct_ep = 0
         for step, (images, targets) in enumerate(self.dataloaders[stage]):
-            # correct = 0
             self._global_step[stage] += 1
 
             predictions = self.model(images.to(self.device))
@@ -87,8 +86,6 @@ class Trainer:
                 running_loss = self._loss_train_step / (step + 1)
             correct = (torch.argmax(predictions.cpu(), dim=1) == targets.cpu()).sum()
             # correct = (torch.argmax(predictions.cpu(), dim=1) == torch.argmax(targets.cpu(), dim=1)).sum()
-
-            # correct = len(np.nonzero(np.asarray(torch.argmax(predictions.cpu(), dim=1) - torch.argmax(targets.cpu())) == 0)[0])
 
             acc = correct / len(targets)
             correct_ep += correct

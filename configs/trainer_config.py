@@ -9,7 +9,7 @@ class TrainerConfig:
         self.epoch_size = 10
         self.lr = 1e-3
         self.weight_decay = 1e-4
-        self.batch_size = 128
+        self.batch_size = 16
 
         self.show_statistics = True
         self.epoch_num = 40

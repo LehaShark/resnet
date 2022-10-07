@@ -14,3 +14,11 @@ class LabelSmoothing(nn.Module):
         equal = (1. - self.smooth) * label
         otherwise = (label < 1) * self.smooth / (self.num_classes - 1)
         return equal + otherwise
+
+class ToOneHot(nn.Module):
+    def __init__(self, num_classes: int):
+        super().__init__()
+        self.num_classes = num_classes
+
+    def forward(self, target):
+        return F.one_hot(target, num_classes=self.classes).transpose(1, -1).squeeze(-1)

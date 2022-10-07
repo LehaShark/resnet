@@ -81,6 +81,7 @@ if __name__ == '__main__':
 
     model = trainer.load_model(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "logs\\exp_1\\40.pth"))
 
+    trainer.validation(0)
     epochs = 1
     for epoch in range(epochs):
 
